@@ -1,8 +1,8 @@
-#Pathfinder 2
+# Pathfinder 2
 
-##Plan
+## Plan
 
-###Main Elements
+### Main Elements
 
 - course table (course ID, course name) - READ only, draggable
 - certification table (cert ID, cert name) - READ only, draggable
@@ -12,7 +12,7 @@
  -- SAVE button
  -- DOWNLOAD button
 
-###Data 
+### Data 
 
 - Load/Save(JS)
 - Server (PHP)- Datasource
