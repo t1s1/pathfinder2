@@ -19,26 +19,29 @@
       global $
     */
     $(document).ready(function() {
-
+/*
       $.ajax({
         type: "GET",
         url: "data/AA_courses.csv",
         dataType: "text",
         success: function(data) { processData(data); }
       });
+      */
+      $.get( "data/AA_courses.csv", function( data ) {processData(data, "course-table")});
+      $.get( "data/AA_certs.csv", function( data ) {processData(data, "cert-table")});
     });
 
-    function processData(allText) {
-      var allTextLines = allText.split(/\r\n|\n/);
-      var headers = allTextLines[0].split(',');
+    function processData( data, tableName ) {
+      var dataRows = data.split(/\r\n|\n/);
+      var headers = dataRows[0].split(',');
       var data_arr = [];
       
       function removeQuoteMarks(string) {
         return string.replace(/"/g,'');
       };
 
-      for (var i=1; i<allTextLines.length; i++) {
-         var data = allTextLines[i].split(',');
+      for (var i=1; i<dataRows.length; i++) {
+         var data = dataRows[i].split(',');
           if (data.length == headers.length) {
             var row = {};
             for (var j=0; j<headers.length; j++) {
@@ -48,16 +51,16 @@
           }
       };
 
-      var table = new Tabulator("#course-table", {
+      var table = new Tabulator("#"+tableName, {
        	height:550, 
        	data:data_arr,
        	layout:"fitColumns", //fit columns to width of table (optional)
        	columns:[ //Define Table Columns
-       	 	{title:"Name", field:"COURSE_ID", width:150},
-       	 	{title:"Age", field:"NAME"}
+       	 	{title:"ID", field:headers[0], width:150},
+       	 	{title:"Name", field:headers[1]}
        	],
        	rowClick:function(e, row){ //trigger an alert message when the row is clicked
-       			alert("Row " + row.getData().id + " Clicked!!!!");
+       			//alert("Row " + row.getData().id + " Clicked!!!!");
        	},
       });
     }
@@ -68,6 +71,7 @@
 <body>
 Pathfinder 2
 <div id="course-table"></div>
+<div id="cert-table"></div>
 </body>
 
 </html>
