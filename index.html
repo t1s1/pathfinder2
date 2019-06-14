@@ -1,0 +1,73 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="tabulator/css/tabulator.min.css">
+  <style type="text/css">
+
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js"></script> -->
+  <script type="text/javascript" src="tabulator/js/tabulator.min.js"></script>
+  
+  <script type="text/javascript" class="init">
+    /*
+      global $
+    */
+    $(document).ready(function() {
+
+      $.ajax({
+        type: "GET",
+        url: "data/AA_courses.csv",
+        dataType: "text",
+        success: function(data) { processData(data); }
+      });
+    });
+
+    function processData(allText) {
+      var allTextLines = allText.split(/\r\n|\n/);
+      var headers = allTextLines[0].split(',');
+      var data_arr = [];
+      
+      function removeQuoteMarks(string) {
+        return string.replace(/"/g,'');
+      };
+
+      for (var i=1; i<allTextLines.length; i++) {
+         var data = allTextLines[i].split(',');
+          if (data.length == headers.length) {
+            var row = {};
+            for (var j=0; j<headers.length; j++) {
+                row[headers[j]] = removeQuoteMarks(data[j]);
+            }
+            data_arr.push(row);
+          }
+      };
+
+      var table = new Tabulator("#course-table", {
+       	height:550, 
+       	data:data_arr,
+       	layout:"fitColumns", //fit columns to width of table (optional)
+       	columns:[ //Define Table Columns
+       	 	{title:"Name", field:"COURSE_ID", width:150},
+       	 	{title:"Age", field:"NAME"}
+       	],
+       	rowClick:function(e, row){ //trigger an alert message when the row is clicked
+       			alert("Row " + row.getData().id + " Clicked!!!!");
+       	},
+      });
+    }
+    
+  </script>
+</head>
+
+<body>
+Pathfinder 2
+<div id="course-table"></div>
+</body>
+
+</html>
