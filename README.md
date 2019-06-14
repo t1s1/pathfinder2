@@ -1,14 +1,20 @@
-         ___        ______     ____ _                 _  ___  
-        / \ \      / / ___|   / ___| | ___  _   _  __| |/ _ \ 
-       / _ \ \ /\ / /\___ \  | |   | |/ _ \| | | |/ _` | (_) |
-      / ___ \ V  V /  ___) | | |___| | (_) | |_| | (_| |\__, |
-     /_/   \_\_/\_/  |____/   \____|_|\___/ \__,_|\__,_|  /_/ 
- ----------------------------------------------------------------- 
+#Pathfinder 2
 
+##Plan
 
-Hi there! Welcome to AWS Cloud9!
+###Main Elements
 
-To get started, create some files, play with the terminal,
-or visit https://docs.aws.amazon.com/console/cloud9/ for our documentation.
+- course table (course ID, course name) - READ only, draggable
+- certification table (cert ID, cert name) - READ only, draggable
+- association table - READ/WRITE, droppable
+-- header (set by selecting from either course or cert table)
+ -- associated items (sortable, delete)
+ -- SAVE button
+ -- DOWNLOAD button
 
-Happy coding!
+###Data 
+
+- Load/Save(JS)
+- Server (PHP)- Datasource
+
+CSV to start?
