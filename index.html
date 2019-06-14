@@ -6,12 +6,13 @@
 
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="tabulator/css/tabulator.min.css">
+  <link rel="stylesheet" href="tabulator/css/bootstrap/tabulator_bootstrap4.min.css">
   <style type="text/css">
-
+    html, body {font-size: 12px;}
   </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js"></script> -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js"></script>
   <script type="text/javascript" src="tabulator/js/tabulator.min.js"></script>
   
   <script type="text/javascript" class="init">
@@ -19,22 +20,17 @@
       global $
     */
     $(document).ready(function() {
-/*
-      $.ajax({
-        type: "GET",
-        url: "data/AA_courses.csv",
-        dataType: "text",
-        success: function(data) { processData(data); }
-      });
-      */
-      $.get( "data/AA_courses.csv", function( data ) {processData(data, "course-table")});
-      $.get( "data/AA_certs.csv", function( data ) {processData(data, "cert-table")});
+      $.get( "data/AA_courses.csv", function( data ) {processData(data, "course-table", 1)});
+      $.get( "data/AA_certs.csv", function( data ) {processData(data, "cert-table", 0)});
+      // no data yet
+      processData("none", "assoc-table", 0);
     });
 
-    function processData( data, tableName ) {
+    function processData( data, tableName, showID ) {
       var dataRows = data.split(/\r\n|\n/);
       var headers = dataRows[0].split(',');
       var data_arr = [];
+      var columns = [];
       
       function removeQuoteMarks(string) {
         return string.replace(/"/g,'');
@@ -50,15 +46,24 @@
             data_arr.push(row);
           }
       };
-
+      
+      if(showID) {
+        columns = [
+       	 	{title:"ID", field:headers[0], width:80},
+       	 	{title:"Name", field:headers[1]}
+       	]
+      }
+      else {
+        columns = [
+       	 	{title:"Name", field:headers[1]}
+       	]
+      }
+      
       var table = new Tabulator("#"+tableName, {
        	height:550, 
        	data:data_arr,
        	layout:"fitColumns", //fit columns to width of table (optional)
-       	columns:[ //Define Table Columns
-       	 	{title:"ID", field:headers[0], width:150},
-       	 	{title:"Name", field:headers[1]}
-       	],
+       	columns: columns,
        	rowClick:function(e, row){ //trigger an alert message when the row is clicked
        			//alert("Row " + row.getData().id + " Clicked!!!!");
        	},
@@ -69,9 +74,16 @@
 </head>
 
 <body>
-Pathfinder 2
-<div id="course-table"></div>
-<div id="cert-table"></div>
+<div class="container">
+  <div class="row">
+    <div class="col-lg"><h1 class="display-3">Pathfinder 2</h1></div>
+  </div>
+  <div class="row">
+    <div id="course-table" class="col-xl-4"></div>
+    <div id="assoc-table" class="col-xl-4"></div>
+    <div id="cert-table"class="col-xl-4"></div> 
+  </div>
+</div>
 </body>
 
 </html>
