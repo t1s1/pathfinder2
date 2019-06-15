@@ -4,14 +4,20 @@ global Tabulator
 */
 
 $(document).ready(function() {
-  $.get( "data/AA_courses.csv", function( data ) { setupCourseTable(data, "course-table") });
-  $.get( "data/AA_certs.csv", function( data ) { setupCertTable(data, "cert-table") });
-  $.get( "data/AA_assoc.csv", function( data ) { setupAssocTable(data, "assoc-table") });
+  $.get( "data/AA_courses.csv", function( data ) { initCourseData( data, "course-table" ) });
+  $.get( "data/AA_certs.csv", function( data ) { initCertData( data, "cert-table" ) });
+  $.get( "data/AA_assoc.csv", function( data ) { initAssocData( data, "assoc-table" ) });
 });
 
-var assocTable;
+// these need to persist and be accessible
+var courseData_obj = {};
+var certData_obj = {};
 
-function processData( data, tableName ) {
+var assocTable;
+var assocData_obj = {};
+var assocTableName;
+
+function processData( data ) {
   var dataRows = data.split(/\r\n|\n/);
   var headers = dataRows[0].split(',');
   var data_arr = [];
@@ -34,9 +40,8 @@ function processData( data, tableName ) {
   return { "arr": data_arr, "headers": headers };
 }
 
-function setupCourseTable( data, tableName ) {
-  
-  var data_obj = processData( data, tableName );
+function setupCourseTable( data_obj, tableName ) {
+
   var headers = data_obj.headers;
   var data_arr = data_obj.arr;
 
@@ -52,14 +57,14 @@ function setupCourseTable( data, tableName ) {
     columns: columns,
     rowClick:function(e, row){
       $("#root-choice").val(row.getData()["NAME"]);
-      assocTable.setFilter("COURSE_ID", "=", row.getData()["COURSE_ID"]);
+      // note that we send the *cert* data obj - we filter by course
+      resetAssocTable("course", certData_obj, row.getData()["COURSE_ID"]);
     }
   });
 }
 
-function setupCertTable( data, tableName ) {
-  
-  var data_obj = processData( data, tableName );
+function setupCertTable( data_obj, tableName ) {
+
   var headers = data_obj.headers;
   var data_arr = data_obj.arr;
 
@@ -74,29 +79,80 @@ function setupCertTable( data, tableName ) {
     columns: columns,
     rowClick:function(e, row){
       $("#root-choice").val(row.getData()["NAME"]);
-      assocTable.setFilter("CERT_ID", "=", row.getData()["CERT_ID"]);
+      // note that we send the *course* data obj - we filter by cert
+      resetAssocTable("cert", courseData_obj, row.getData()["CERT_ID"]);
     }
   });
 }
 
-function setupAssocTable( data, tableName ) {
-  
-  var data_obj = processData( data, tableName );
-  var headers = data_obj.headers;
-  var data_arr = data_obj.arr;
+function initCourseData( data, tableName ) {
+  courseData_obj = processData( data );
+  setupCourseTable( courseData_obj, tableName );
+}
 
-  var columns = [
-    {title:"COURSE", field:headers[0], width:160},
-    {title:"CERT", field:headers[1], width:160}
-    ]
+
+function initCertData( data, tableName ) {
+  certData_obj = processData( data );
+  setupCertTable( certData_obj, tableName );
+}
+
+
+function initAssocData( data, tableName ) {
+  assocData_obj = processData( data );
+  assocTableName = tableName;
+}
+
+function resetAssocTable( selected, data_obj, ID ) {
   
-  assocTable = new Tabulator("#"+tableName, {
+  var columns = [];
+  var isCourse = false;
+  var filter = [[]];
+  isCourse  = ( selected === "course" );
+  
+  if (isCourse) {
+    columns = [
+      { title: "Name", field: certData_obj.headers[1] }
+    ];
+    // build correct filter
+    $.grep(assocData_obj.arr, function( element, i ) {
+      console.log(element["COURSE_ID"])
+      if (element["COURSE_ID"] === ID) {
+        filter[0].push({ 
+          field:"CERT_ID", 
+          type:"=", 
+          value: element["CERT_ID"]
+          });
+        return true;
+      }
+    });    
+  }
+  else {
+    columns = [
+      { title: "ID", field: courseData_obj.headers[0], width:80 },
+      { title: "Name", field: courseData_obj.headers[1] }
+    ];
+    // build correct filter
+    $.grep(assocData_obj.arr, function( element, i ) {
+      if (element["CERT_ID"] === ID) {
+        filter[0].push({ 
+          field:"COURSE_ID", 
+          type:"=", 
+          value: element["COURSE_ID"]
+          });
+        return true;
+      }
+    });
+  }
+  
+  console.log(filter);
+  
+  // show filtered version of table
+  
+  assocTable = new Tabulator("#"+assocTableName, {
     height: 550, 
-    data: data_arr,
+    data: data_obj.arr,
     movableRows: true, //enable user movable rows
-    columns: columns,
-    rowClick:function(e, row){ //trigger an alert message when the row is clicked
-        // console.log(row.getData());
-      },
+    initialFilter: filter,
+    columns: columns
   });
 }
