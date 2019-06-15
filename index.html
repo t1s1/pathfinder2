@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8">
+  <title>Association Manager</title>
 
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="tabulator/css/tabulator.min.css">
@@ -20,16 +21,18 @@
 
 <body>
 <div class="container">
-  <div class="row">
-    <div class="col-lg"><h1 class="display-2">Pathfinder 2</h1></div>
+  <div class="row bg-dark">
+    <div class="col-lg">
+      <h1 class="display-3 float-left text-white">Association Manager</h1>
+    </div>
   </div>
   <div class="row">
     <div id="courses" class="col-xl-4">
       <div class="display-4">Courses</div>
       <div id="course-table"></div>
     </div>
-    <div id="courses" class="col-xl-4">
-      <input id="root-choice" type="text" class="form-control display-4" placeholder="Selected">
+    <div id="assoc" class="col-xl-4">
+      <input id="root-choice" type="text" class="h4 text-primary w-100 mt-5" placeholder="Selected">
       <div id="assoc-table"></div>
     </div>
     <div id="certs" class="col-xl-4">

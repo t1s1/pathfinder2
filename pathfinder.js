@@ -55,6 +55,8 @@ function setupCourseTable( data_obj, tableName ) {
     data: data_arr,
     layout: "fitColumns",
     columns: columns,
+    movableRows: true,
+    movableRowsConnectedTables: "#assoc-table",
     rowClick:function(e, row){
       $("#root-choice").val(row.getData()["NAME"]);
       // note that we send the *cert* data obj - we filter by course
@@ -77,6 +79,8 @@ function setupCertTable( data_obj, tableName ) {
     data: data_arr,
     layout: "fitColumns",
     columns: columns,
+    movableRows: true,
+    movableRowsConnectedTables: "#assoc-table",
     rowClick:function(e, row){
       $("#root-choice").val(row.getData()["NAME"]);
       // note that we send the *course* data obj - we filter by cert
@@ -106,16 +110,38 @@ function resetAssocTable( selected, data_obj, ID ) {
   
   var columns = [];
   var isCourse = false;
-  var filter = [[]];
+  // array within the filter array gives OR, which is good
+  var filter = [[{ 
+    field:"COURSE_ID", 
+    type:"=", 
+    value: "0"
+    }]]; // starter filter object should give no results
+    
   isCourse  = ( selected === "course" );
   
+  function customReceiver(fromRow, toRow, fromTable){
+    //fromRow - the row component from the sending table
+    //toRow - the row component from the receiving table (if available)
+    //fromTable - the Tabulator object for the sending table
+    
+    // we don't want it if it's from the same table we selected from originally
+    if( (isCourse && fromTable.id === "course-table") || (!isCourse && fromTable.id === "cert-table") ) {
+      return false;
+    }
+    else {
+      this.table.addRow(fromRow.getData());
+      return true;
+    }
+    
+  }
+  
+  // set up table to show certifications for COURSE
   if (isCourse) {
     columns = [
       { title: "Name", field: certData_obj.headers[1] }
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
-      console.log(element["COURSE_ID"])
       if (element["COURSE_ID"] === ID) {
         filter[0].push({ 
           field:"CERT_ID", 
@@ -124,8 +150,10 @@ function resetAssocTable( selected, data_obj, ID ) {
           });
         return true;
       }
+      return false;
     });    
   }
+  // set up table to show courses for CERTIFICATION
   else {
     columns = [
       { title: "ID", field: courseData_obj.headers[0], width:80 },
@@ -141,17 +169,18 @@ function resetAssocTable( selected, data_obj, ID ) {
           });
         return true;
       }
+      return false;
     });
   }
-  
-  console.log(filter);
   
   // show filtered version of table
   
   assocTable = new Tabulator("#"+assocTableName, {
     height: 550, 
+    layout:"fitColumns",
     data: data_obj.arr,
-    movableRows: true, //enable user movable rows
+    movableRowsReceiver: customReceiver,
+    //movableRows: true,
     initialFilter: filter,
     columns: columns
   });
