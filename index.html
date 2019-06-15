@@ -22,6 +22,7 @@
     $(document).ready(function() {
       $.get( "data/AA_courses.csv", function( data ) {processData(data, "course-table", 1)});
       $.get( "data/AA_certs.csv", function( data ) {processData(data, "cert-table", 0)});
+      $.get( "data/AA_assoc.csv", function( data ) {processAssocData(data, "assoc-table")});
       // no data yet
       processData("none", "assoc-table", 0);
     });
@@ -65,7 +66,40 @@
        	layout:"fitColumns", //fit columns to width of table (optional)
        	columns: columns,
        	rowClick:function(e, row){ //trigger an alert message when the row is clicked
-       			//alert("Row " + row.getData().id + " Clicked!!!!");
+       			$("#root-choice").val(row.getData()["NAME"]);
+       	},
+      });
+    }
+    
+    function processAssocData( data, tableName ) {
+      var dataRows = data.split(/\r\n|\n/);
+      var headers = dataRows[0].split(',');
+      var data_arr = [];
+      var columns = [];
+
+      for (var i=1; i<dataRows.length; i++) {
+         var data = dataRows[i].split(',');
+          if (data.length == headers.length) {
+            var row = {};
+            for (var j=0; j<headers.length; j++) {
+                row[headers[j]] = data[j];
+            }
+            data_arr.push(row);
+          }
+      };
+      
+      columns = [
+       	 	{title:"COURSE", field:headers[0], width:160},
+       	 	{title:"CERT", field:headers[1], width:160}
+       	]
+      
+      var table = new Tabulator("#"+tableName, {
+       	height:550, 
+       	data:data_arr,
+       	movableRows: true, //enable user movable rows
+       	columns: columns,
+       	rowClick:function(e, row){ //trigger an alert message when the row is clicked
+       			// console.log(row.getData());
        	},
       });
     }
@@ -76,12 +110,21 @@
 <body>
 <div class="container">
   <div class="row">
-    <div class="col-lg"><h1 class="display-3">Pathfinder 2</h1></div>
+    <div class="col-lg"><h1 class="display-2">Pathfinder 2</h1></div>
   </div>
   <div class="row">
-    <div id="course-table" class="col-xl-4"></div>
-    <div id="assoc-table" class="col-xl-4"></div>
-    <div id="cert-table"class="col-xl-4"></div> 
+    <div id="courses" class="col-xl-4">
+      <div class="display-4">Courses</div>
+      <div id="course-table"></div>
+    </div>
+    <div id="courses" class="col-xl-4">
+      <input id="root-choice" type="text" class="form-control display-4" placeholder="Selected">
+      <div id="assoc-table"></div>
+    </div>
+    <div id="certs" class="col-xl-4">
+      <div class="display-4">Certifications</div>
+      <div id="cert-table"></div>
+    </div>
   </div>
 </div>
 </body>
