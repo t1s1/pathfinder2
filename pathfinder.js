@@ -49,24 +49,38 @@ function setupCourseTable( data_obj, tableName ) {
 
   var headers = data_obj.headers;
   var data_arr = data_obj.arr;
+  
+  function addButtonCustomFormatter( cell, formatterParams ){
+    return "<button class='btn btn-sm btn-success course-add-button font-weight-bold' >&plus;</button>";
+  };
+  
+  function onAddClick( e, cell ){
+    var row = cell.getRow();
+    assocTable.addRow(row.getData());
+  }
+
+  function onSelectClick( e, cell ){
+    var row = cell.getRow();
+    // set header of association table
+    $("#root-choice").val(row.getData()["NAME"]);
+    // note that we send the *cert* data obj - we filter by course
+    resetAssocTable("course", certData_obj, row.getData()["COURSE_ID"]);
+    // disable the course ADD buttons and enable cert ADD buttons
+    $(".course-add-button").prop('disabled', true);
+    $(".cert-add-button").prop('disabled', false);
+  }
 
   var columns = [
-    {title: "ID", field: headers[0], width:80},
-    {title: "Name", field: headers[1]}
+    {title: "ID", field: headers[0], width:80, cellClick: onSelectClick},
+    { title:"Name", field:headers[1], cellClick: onSelectClick },
+    { formatter: addButtonCustomFormatter, width:60, align:"center", cellClick: onAddClick }
     ]
 
   var table = new Tabulator("#"+tableName, {
     height: 550, 
     data: data_arr,
     layout: "fitColumns",
-    columns: columns,
-    movableRows: true,
-    movableRowsConnectedTables: "#assoc-table",
-    rowClick:function(e, row){
-      $("#root-choice").val(row.getData()["NAME"]);
-      // note that we send the *cert* data obj - we filter by course
-      resetAssocTable("course", certData_obj, row.getData()["COURSE_ID"]);
-    }
+    columns: columns
   });
 }
 
@@ -74,23 +88,40 @@ function setupCertTable( data_obj, tableName ) {
 
   var headers = data_obj.headers;
   var data_arr = data_obj.arr;
+  
+  function addButtonCustomFormatter( cell, formatterParams ){
+    return "<button class='btn btn-sm btn-success cert-add-button font-weight-bold' >&plus;</button>";
+  };
+  
+  function onAddClick( e, cell ){
+    var row = cell.getRow();
+    assocTable.addRow(row.getData());
+  }
+
+  function onSelectClick( e, cell ){
+    var row = cell.getRow();
+    // set header of association table
+    $("#root-choice").val(row.getData()["NAME"]);
+    // note that we send the *course* data obj - we filter by cert
+    resetAssocTable("cert", courseData_obj, row.getData()["CERT_ID"]);
+    // disable the cert ADD buttons and enable course ADD buttons
+    $(".cert-add-button").prop('disabled', true);
+    $(".course-add-button").prop('disabled', false);
+  }
 
   var columns = [
-    {title:"Name", field:headers[1]}
+    { title:"Name", field:headers[1], cellClick: onSelectClick },
+    { formatter: addButtonCustomFormatter, width:60, align:"center", cellClick: onAddClick }
     ]
 
   var table = new Tabulator("#"+tableName, {
     height: 550, 
     data: data_arr,
     layout: "fitColumns",
-    columns: columns,
-    movableRows: true,
-    movableRowsConnectedTables: "#assoc-table",
-    rowClick:function(e, row){
-      $("#root-choice").val(row.getData()["NAME"]);
-      // note that we send the *course* data obj - we filter by cert
-      resetAssocTable("cert", courseData_obj, row.getData()["CERT_ID"]);
-    }
+    columns: columns
+    //movableRows: true,
+    //movableRowsConnectedTables: "#assoc-table",
+    //rowClick:function(e, row){}
   });
 }
 
@@ -124,6 +155,7 @@ function resetAssocTable( selected, data_obj, ID ) {
     
   isCourse  = ( selected === "course" );
   
+  /*
   function customReceiver(fromRow, toRow, fromTable){
     //fromRow - the row component from the sending table
     //toRow - the row component from the receiving table (if available)
@@ -139,11 +171,13 @@ function resetAssocTable( selected, data_obj, ID ) {
     }
     
   }
+  */
   
   // set up table to show certifications for COURSE
   if (isCourse) {
     columns = [
-      { title: "Name", field: certData_obj.headers[1] }
+      { title: "Name", field: certData_obj.headers[1] },
+      { formatter:"buttonCross", width:40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
@@ -162,7 +196,8 @@ function resetAssocTable( selected, data_obj, ID ) {
   else {
     columns = [
       { title: "ID", field: courseData_obj.headers[0], width:80 },
-      { title: "Name", field: courseData_obj.headers[1] }
+      { title: "Name", field: courseData_obj.headers[1] },
+      { formatter:"buttonCross", width:40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
@@ -184,8 +219,8 @@ function resetAssocTable( selected, data_obj, ID ) {
     height: 550, 
     layout:"fitColumns",
     data: data_obj.arr,
-    movableRowsReceiver: customReceiver,
-    //movableRows: true,
+    //movableRowsReceiver: customReceiver,
+    movableRows: true,
     initialFilter: filter,
     columns: columns
   });
