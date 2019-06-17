@@ -173,31 +173,31 @@ function writeAssocData() {
     return $.merge( old_arr, newElements_arr );
   }
   
-  function newDeletions( old_arr, new_arr ){
-    var updated_arr = old_arr;
-    
-    //TODO: iterate through just the original items that have the root ID, and check those against 
-    // the new list - delete non-matches
-    
-    /*
+  function newDeletions( old_arr, new_arr, key, value ){
+    var updated_arr = Array.from(old_arr);
+    var key2 = (key === "COURSE_ID") ? "CERT_ID" : "COURSE_ID";
+
     // iterate through original array
     $.each( old_arr, function( i, obj ){
-      console.log(i+": "+old_arr[i]);
-      var found = false;
-      // find match in unfiltered assoc array (all existing associations)
-      $.grep( new_arr, function( element, j ) {
-        if (element["COURSE_ID"] === obj["COURSE_ID"] && element["CERT_ID"] === obj["CERT_ID"] ) {
-          found = true;
-          return true;
+      console.log(obj)
+      // only check the correct ID
+      if( obj[key] === value ){
+        var found = false;
+        // search in new filtered array (maybe deletions)
+        $.grep( new_arr, function( element, j ) {
+          if (element[key] === obj[key] && element[key2] === obj[key2] ) {
+            found = true;
+            return true;
+          }
+          return false;
+        });
+        // remove 
+        if( !found ){ 
+          updated_arr.splice( i, 1 )
         }
-        return false;
-      });
-      // remove 
-      if( !found ){ 
-        updated_arr.splice( i, 1 )
       }
     });
-    */
+
     return updated_arr;
   }
   
@@ -207,12 +207,19 @@ function writeAssocData() {
       newAssoc_arr.push({COURSE_ID: assocRoot_obj.ID, CERT_ID: obj.CERT_ID})
     });
     // first delete
-    assocData_obj.arr = newDeletions( assocData_obj.arr, newAssoc_arr );
+    assocData_obj.arr = newDeletions( assocData_obj.arr, newAssoc_arr, "COURSE_ID", assocRoot_obj.ID );
     // then add new
     assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );
   }
   else {
-    
+    // create new array of objects
+    $.each(filteredData_arr, function(i, obj){
+      newAssoc_arr.push({CERT_ID: assocRoot_obj.ID, COURSE_ID: obj.COURSE_ID})
+    });
+    // first delete
+    assocData_obj.arr = newDeletions( assocData_obj.arr, newAssoc_arr, "CERT_ID", assocRoot_obj.ID );
+    // then add new
+    assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );   
   }
 
 }
