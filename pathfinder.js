@@ -7,9 +7,17 @@ $(document).ready(function() {
   $.get( "data/AA_courses.csv", function( data ) { initCourseData( data, "course-table" ) });
   $.get( "data/AA_certs.csv", function( data ) { initCertData( data, "cert-table" ) });
   $.get( "data/AA_assoc.csv", function( data ) { initAssocData( data, "assoc-table" ) });
+  /*$.getJSON("data/assoc.json", function( json ) {
+      alert("ok");
+  });
+  assocTable.setData("./data/assoc_JSON.php");
+  */
   
   $("#download-csv").click( function() {
     assocTable.download("csv", "data.csv");
+  });
+  $("#save-data").click( function() {
+    writeAssocData();
   });
 });
 
@@ -20,6 +28,7 @@ var certData_obj = {};
 
 var assocTable;
 var assocData_obj = {};
+var assocRoot_obj = { type:"", ID:"", name:"" };
 var assocTableName;
 
 function processData( data ) {
@@ -119,9 +128,6 @@ function setupCertTable( data_obj, tableName ) {
     data: data_arr,
     layout: "fitColumns",
     columns: columns
-    //movableRows: true,
-    //movableRowsConnectedTables: "#assoc-table",
-    //rowClick:function(e, row){}
   });
 }
 
@@ -142,46 +148,100 @@ function initAssocData( data, tableName ) {
   assocTableName = tableName;
 }
 
+function writeAssocData() {
+  var newAssoc_arr = [];
+  var filteredData_arr  = assocTable.getData(true); // true for filtered only
+  //var data = JSON.stringify(filteredData_arr);
+  
+  function newAdditions( old_arr, new_arr ) {
+    var newElements_arr = [];
+    // find matches - if matched then we don't need to add it
+    // iterate through filtered assoc array
+    $.each( new_arr, function( i, obj ){
+      var found = false;
+      // find match in unfiltered assoc array (all existing associations)
+      $.grep( old_arr, function( element, j ) {
+        if (element["COURSE_ID"] === obj["COURSE_ID"] && element["CERT_ID"] === obj["CERT_ID"] ) {
+          found = true;
+          return true;
+        }
+        return false;
+      }); 
+      if( !found ){ newElements_arr.push(obj)}
+    });
+
+    return $.merge( old_arr, newElements_arr );
+  }
+  
+  function newDeletions( old_arr, new_arr ){
+    var updated_arr = old_arr;
+    
+    //TODO: iterate through just the original items that have the root ID, and check those against 
+    // the new list - delete non-matches
+    
+    /*
+    // iterate through original array
+    $.each( old_arr, function( i, obj ){
+      console.log(i+": "+old_arr[i]);
+      var found = false;
+      // find match in unfiltered assoc array (all existing associations)
+      $.grep( new_arr, function( element, j ) {
+        if (element["COURSE_ID"] === obj["COURSE_ID"] && element["CERT_ID"] === obj["CERT_ID"] ) {
+          found = true;
+          return true;
+        }
+        return false;
+      });
+      // remove 
+      if( !found ){ 
+        updated_arr.splice( i, 1 )
+      }
+    });
+    */
+    return updated_arr;
+  }
+  
+  if( assocRoot_obj.type === "course" ){
+    // create new array of objects
+    $.each(filteredData_arr, function(i, obj){
+      newAssoc_arr.push({COURSE_ID: assocRoot_obj.ID, CERT_ID: obj.CERT_ID})
+    });
+    // first delete
+    assocData_obj.arr = newDeletions( assocData_obj.arr, newAssoc_arr );
+    // then add new
+    assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );
+  }
+  else {
+    
+  }
+
+}
+
 function resetAssocTable( selected, data_obj, ID ) {
   
   var columns = [];
-  var isCourse = false;
+
   // array within the filter array gives OR, which is good
   var filter = [[{ 
     field:"COURSE_ID", 
     type:"=", 
     value: "0"
     }]]; // starter filter object should give no results
-    
-  isCourse  = ( selected === "course" );
   
-  /*
-  function customReceiver(fromRow, toRow, fromTable){
-    //fromRow - the row component from the sending table
-    //toRow - the row component from the receiving table (if available)
-    //fromTable - the Tabulator object for the sending table
-    
-    // we don't want it if it's from the same table we selected from originally
-    if( (isCourse && fromTable.id === "course-table") || (!isCourse && fromTable.id === "cert-table") ) {
-      return false;
-    }
-    else {
-      this.table.addRow(fromRow.getData());
-      return true;
-    }
-    
-  }
-  */
+  // set up root obj
+  assocRoot_obj.type = selected;
+  assocRoot_obj.ID = ID;
   
   // set up table to show certifications for COURSE
-  if (isCourse) {
+  if (assocRoot_obj.type === "course") {
+    assocRoot_obj.name = certData_obj.headers[1];
     columns = [
-      { title: "Name", field: certData_obj.headers[1] },
+      { title: "Name", field: assocRoot_obj.name },
       { formatter:"buttonCross", width:40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
-      if (element["COURSE_ID"] === ID) {
+      if (element["COURSE_ID"] === assocRoot_obj.ID) {
         filter[0].push({ 
           field:"CERT_ID", 
           type:"=", 
@@ -194,14 +254,15 @@ function resetAssocTable( selected, data_obj, ID ) {
   }
   // set up table to show courses for CERTIFICATION
   else {
+    assocRoot_obj.name = courseData_obj.headers[1];
     columns = [
       { title: "ID", field: courseData_obj.headers[0], width:80 },
-      { title: "Name", field: courseData_obj.headers[1] },
+      { title: "Name", field: assocRoot_obj.name },
       { formatter:"buttonCross", width:40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
-      if (element["CERT_ID"] === ID) {
+      if (element["CERT_ID"] === assocRoot_obj.ID) {
         filter[0].push({ 
           field:"COURSE_ID", 
           type:"=", 
@@ -214,13 +275,11 @@ function resetAssocTable( selected, data_obj, ID ) {
   }
   
   // show filtered version of table
-  
   assocTable = new Tabulator("#"+assocTableName, {
     height: 550, 
     layout:"fitColumns",
     data: data_obj.arr,
-    //movableRowsReceiver: customReceiver,
-    movableRows: true,
+    //movableRows: true,
     initialFilter: filter,
     columns: columns
   });
