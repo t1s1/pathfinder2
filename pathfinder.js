@@ -72,6 +72,8 @@ function setupCourseTable( data_obj, tableName ) {
     var row = cell.getRow();
     // set header of association table
     $("#root-choice").val(row.getData()["NAME"]);
+    // set type
+    $("#root-type").text("COURSE");
     // note that we send the *cert* data obj - we filter by course
     resetAssocTable("course", certData_obj, row.getData()["COURSE_ID"]);
     // disable the course ADD buttons and enable cert ADD buttons
@@ -111,6 +113,8 @@ function setupCertTable( data_obj, tableName ) {
     var row = cell.getRow();
     // set header of association table
     $("#root-choice").val(row.getData()["NAME"]);
+    // set type
+    $("#root-type").text("CERTIFICATION");
     // note that we send the *course* data obj - we filter by cert
     resetAssocTable("cert", courseData_obj, row.getData()["CERT_ID"]);
     // disable the cert ADD buttons and enable course ADD buttons
