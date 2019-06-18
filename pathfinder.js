@@ -21,6 +21,7 @@ $(document).ready(function() {
   });
 });
 
+const tableHeight = 500;
 
 // these need to persist and be accessible
 var courseData_obj = {};
@@ -88,9 +89,11 @@ function setupCourseTable( data_obj, tableName ) {
     ]
 
   var table = new Tabulator("#"+tableName, {
-    height: 550, 
+    height: tableHeight,
     data: data_arr,
     layout: "fitColumns",
+    pagination: "local",
+    paginationSize:10,
     columns: columns
   });
 }
@@ -128,10 +131,21 @@ function setupCertTable( data_obj, tableName ) {
     ]
 
   var table = new Tabulator("#"+tableName, {
-    height: 550, 
+    height: tableHeight, 
     data: data_arr,
     layout: "fitColumns",
+    pagination:"local",
+    paginationSize:10,
     columns: columns
+  });
+}
+
+function setupAssocTable( tableName ){
+  
+    // show filtered version of table
+  assocTable = new Tabulator("#"+assocTableName, {
+    layout:"fitColumns",
+    height: tableHeight-30
   });
 }
 
@@ -150,6 +164,7 @@ function initCertData( data, tableName ) {
 function initAssocData( data, tableName ) {
   assocData_obj = processData( data );
   assocTableName = tableName;
+  setupAssocTable( assocTableName );
 }
 
 function writeAssocData() {
@@ -287,8 +302,10 @@ function resetAssocTable( selected, data_obj, ID ) {
   
   // show filtered version of table
   assocTable = new Tabulator("#"+assocTableName, {
-    height: 550, 
+    height: tableHeight-30, 
     layout:"fitColumns",
+    pagination:"local",
+    paginationSize:10,
     data: data_obj.arr,
     //movableRows: true,
     initialFilter: filter,

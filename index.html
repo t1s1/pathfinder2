@@ -9,7 +9,23 @@
   <link rel="stylesheet" href="tabulator/css/tabulator.min.css">
   <link rel="stylesheet" href="tabulator/css/bootstrap/tabulator_bootstrap4.min.css">
   <style type="text/css">
-    html, body {font-size: 12px;}
+    html, body {
+      font-size: 12px;
+      height: 100vh;
+    }
+    #col-header {
+      height: 55px;
+    }
+    .table-col {
+      width: 33.3333%;
+      max-width: 33.3333%;
+    }
+    .tabulator .tabulator-footer .tabulator-page {
+      padding: 3px 6px;
+    }
+    .tabulator .tabulator-tableHolder {
+      overflow: hidden;
+    }
   </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -21,28 +37,27 @@
 
 <body>
 <div class="container">
-  <div class="row bg-dark">
-    <div class="col-lg">
-      <h1 class="display-3 float-left text-white">Association Manager</h1>
-    </div>
+  <div id="col-header" class="row">
+    <div class="display-4 col-xl-4">Certifications</div>
+      <div class="col-xl-4">
+        <small id="root-type" class="text-muted mt-5">&nbsp;</small>
+        <input id="root-choice" type="text" class="h4 text-primary w-100" placeholder="Select">
+      </div>
+    <div class="display-4 col-xl-4">Courses</div>
   </div>
-  <div class="row">
-    <div id="courses" class="col-xl-4">
-      <div class="display-4">Courses</div>
-      <div id="course-table"></div>
+  <div id="cols" class="row">
+    <div id="certs" class="table-col col-xl-4">
+      <div id="cert-table"></div>
     </div>
-    <div id="assoc" class="col-xl-4">
-      <small id="root-type" class="text-muted mt-5"></small>
-      <input id="root-choice" type="text" class="h4 text-primary w-100" placeholder="Select">
+    <div id="assoc" class="table-col col-xl-4">
       <div id="assoc-table"></div>
       <div class="table-controls">
-        <!-- <button id="download-csv">Download CSV</button> -->
         <button id="save-data" class="btn btn-outline-success">SAVE</button>
+        <!-- <button id="download-csv" class="btn btn-outline-primary">Download CSV</button> -->
       </div>
     </div>
-    <div id="certs" class="col-xl-4">
-      <div class="display-4">Certifications</div>
-      <div id="cert-table"></div>
+    <div id="courses" class="table-col col-xl-4">
+      <div id="course-table"></div>
     </div>
   </div>
 </div>
