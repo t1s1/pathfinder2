@@ -7,14 +7,16 @@ $(document).ready(function() {
   $.get( "data/AA_courses.csv", function( data ) { initCourseData( data, "course-table" ) });
   $.get( "data/AA_certs.csv", function( data ) { initCertData( data, "cert-table" ) });
   $.get( "data/AA_assoc.csv", function( data ) { initAssocData( data, "assoc-table" ) });
-  /*$.getJSON("data/assoc.json", function( json ) {
-      alert("ok");
+  /*
+  $.getJSON("http://34.229.45.11/json.php", function( json ) {
+      initAssocData( json,"assoc-table" );
   });
-  assocTable.setData("./data/assoc_JSON.php");
+  
+  //assocTable.setData("http://34.229.45.11/json.php");
   */
   
-  $("#download-csv").click( function() {
-    assocTable.download("csv", "data.csv");
+  $("#download-json").click( function() {
+    downloadJSON( assocData_obj.arr );
   });
   $("#save-data").click( function() {
     writeAssocData();
@@ -89,11 +91,10 @@ function setupCourseTable( data_obj, tableName ) {
     ]
 
   var table = new Tabulator("#"+tableName, {
-    height: tableHeight,
     data: data_arr,
     layout: "fitColumns",
     pagination: "local",
-    paginationSize:10,
+    paginationSize: 10,
     columns: columns
   });
 }
@@ -131,11 +132,10 @@ function setupCertTable( data_obj, tableName ) {
     ]
 
   var table = new Tabulator("#"+tableName, {
-    height: tableHeight, 
     data: data_arr,
     layout: "fitColumns",
     pagination:"local",
-    paginationSize:10,
+    paginationSize: 10,
     columns: columns
   });
 }
@@ -145,7 +145,8 @@ function setupAssocTable( tableName ){
     // show filtered version of table
   assocTable = new Tabulator("#"+assocTableName, {
     layout:"fitColumns",
-    height: tableHeight-30
+    pagination: "local",
+    paginationSize: 10,
   });
 }
 
@@ -170,7 +171,6 @@ function initAssocData( data, tableName ) {
 function writeAssocData() {
   var newAssoc_arr = [];
   var filteredData_arr  = assocTable.getData(true); // true for filtered only
-  //var data = JSON.stringify(filteredData_arr);
   
   function newAdditions( old_arr, new_arr ) {
     var newElements_arr = [];
@@ -198,7 +198,6 @@ function writeAssocData() {
 
     // iterate through original array
     $.each( old_arr, function( i, obj ){
-      console.log(obj)
       // only check the correct ID
       if( obj[key] === value ){
         var found = false;
@@ -240,7 +239,7 @@ function writeAssocData() {
     // then add new
     assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );   
   }
-
+  downloadJSON( assocData_obj.arr );
 }
 
 function resetAssocTable( selected, data_obj, ID ) {
@@ -302,13 +301,22 @@ function resetAssocTable( selected, data_obj, ID ) {
   
   // show filtered version of table
   assocTable = new Tabulator("#"+assocTableName, {
-    height: tableHeight-30, 
     layout:"fitColumns",
     pagination:"local",
-    paginationSize:10,
+    paginationSize: 10,
     data: data_obj.arr,
     //movableRows: true,
     initialFilter: filter,
     columns: columns
   });
+}
+
+function downloadJSON( content_arr ) {
+  var jsonData = JSON.stringify(content_arr);
+  var tempDownloadElement = document.createElement("a");
+  var file_blob = new Blob( [jsonData], {type: "json"});
+  
+  tempDownloadElement.href = URL.createObjectURL(file_blob);
+  tempDownloadElement.download = "assoc_data.json";
+  tempDownloadElement.click();
 }

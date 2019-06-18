@@ -1,0 +1,61 @@
+Notes for starting up LAMP
+
+sudo service apache2 start && sudo service apache2 status
+
+[q to exit]
+
+sudo service mysql start && sudo service mysql status
+
+[q to exit]
+
+sudo mysql -uroot -p
+
+Get URL to index.php
+
+MY_PUBLIC_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4) && echo http://$MY_PUBLIC_IP/index.php # Get the URL to the index.php file within the web server root.
+
+http://34.229.45.11/index.php
+
+https://docs.aws.amazon.com/cloud9/latest/user-guide/app-preview.html#app-preview-preview-app
+
+---------------------------------------------------------------------------------------------
+First time only:
+sudo mysql_secure_installation
+
+Password: ghosesFip%
+
+Setup default website
+
+sudo groupadd web-content # Create a group named web-content.
+
+sudo usermod -G web-content -a ubuntu # Add the user ubuntu (your default user for this environment) to the group web-content.
+
+sudo usermod -G web-content -a www-data # Add the user www-data (Apache HTTP Server) to the group web-content.
+
+sudo chown -R ubuntu:web-content /var/www/html # Change the owner of /var/www/html and its files to user ubuntu and group web-content.
+
+sudo find /var/www/html -type f -exec chmod u=rw,g=rx,o=rx {} \; # Change all file permissions within /var/www/html to user read/write, group read-only, and others read/execute. 
+
+sudo find /var/www/html -type d -exec chmod u=rwx,g=rx,o=rx {} \; # Change /var/www/html directory permissions to user read/write/execute, group read/execute, and others read/execute.
+
+sudo touch /var/www/html/index.php && sudo chown -R ubuntu:web-content /var/www/html/index.php && sudo chmod u=rw,g=rx,o=rx /var/www/html/index.php && sudo printf '%s\n%s\n%s' '<?php' '  phpinfo();' '?>' >> /var/www/html/index.php
+
+
+Enable incoming web traffic over port 80 to view the new webpage by setting up the network ACL in Amazon VPC and the security group Amazon EC2 that is associated with this EC2 environment. To do this, run the following eight commands, one at a time in the following order. To understand what each command does, read the information after the # character for each command.
+
+MY_INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id) # Get the ID of the instance for the environment, and store it temporarily.
+           
+MY_SECURITY_GROUP_ID=$(aws ec2 describe-instances --instance-id $MY_INSTANCE_ID --query 'Reservations[].Instances[0].SecurityGroups[0].GroupId' --output text) # Get the ID of the security group associated with the instance, and store it temporarily.
+
+aws ec2 authorize-security-group-ingress --group-id $MY_SECURITY_GROUP_ID --protocol tcp --cidr 0.0.0.0/0 --port 80 # Add an inbound rule to the security group to allow all incoming IPv4-based traffic over port 80.
+
+aws ec2 authorize-security-group-ingress --group-id $MY_SECURITY_GROUP_ID --ip-permissions IpProtocol=tcp,Ipv6Ranges='[{CidrIpv6=::/0}]',FromPort=80,ToPort=80 # Add an inbound rule to the securty group to allow all incoming IPv6-based traffic over port 80.
+
+MY_SUBNET_ID=$(aws ec2 describe-instances --instance-id $MY_INSTANCE_ID --query 'Reservations[].Instances[0].SubnetId' --output text) # Get the ID of the subnet associated with the instance, and store it temporarily.
+
+MY_NETWORK_ACL_ID=$(aws ec2 describe-network-acls --filters Name=association.subnet-id,Values=$MY_SUBNET_ID --query 'NetworkAcls[].Associations[0].NetworkAclId' --output text) # Get the ID of the network ACL associated with the subnet, and store it temporarily.
+
+aws ec2 create-network-acl-entry --network-acl-id $MY_NETWORK_ACL_ID --ingress --protocol tcp --rule-action allow --rule-number 10000 --cidr-block 0.0.0.0/0 --port-range From=80,To=80 # Add an inbound rule to the network ACL to allow all IPv4-based traffic over port 80. Advanced users: change this suggested rule number as desired.
+
+aws ec2 create-network-acl-entry --network-acl-id $MY_NETWORK_ACL_ID --ingress --protocol tcp --rule-action allow --rule-number 10100 --ipv6-cidr-block ::/0 --port-range From=80,To=80 # Add an inbound rule to the network ACL to allow all IPv6-based traffic over port 80. Advanced users: change this suggested rule number as desired.
+
