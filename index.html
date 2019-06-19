@@ -40,26 +40,25 @@
 
 <body>
 <div class="container">
-  <div id="col-header" class="row">
-    <div class="h3 col-4">Certifications</div>
-      <div class="col-4">
-        <small id="root-type" class="text-muted mt-5">&nbsp;</small>
-        <input id="root-choice" type="text" class="h4 text-primary w-100" placeholder="Select">
-      </div>
-    <div class="h3 col-4">Courses</div>
-  </div>
   <div id="cols" class="row">
     <div id="certs" class="table-col col-4">
+      <div class="h4">Certifications</div>
       <div id="cert-table"></div>
     </div>
     <div id="assoc" class="table-col col-4">
-      <div class="table-controls">
-        <button id="save-data" class="btn btn-sm btn-outline-success">SAVE</button>
-        <button id="download-json" class="btn btn-sm btn-outline-primary">Download JSON</button>
+      <div class="w-100">
+        <small id="root-type" class="text-muted mt-5">&nbsp;</small>
+        <input id="root-choice" type="text" class="h4 text-primary w-100" placeholder="Select">
       </div>
       <div id="assoc-table"></div>
+      <div class="table-controls">
+        <button id="save-data" class="btn btn-sm bg-success text-white">SAVE</button>
+        <button id="download-csv" class="btn btn-sm bg-primary text-white">Download CSV</button>
+        <button id="download-json" class="btn btn-sm bg-secondary text-white">Download JSON</button>
+      </div>
     </div>
     <div id="courses" class="table-col col-4">
+      <div class="h4">Courses</div>
       <div id="course-table"></div>
     </div>
   </div>

@@ -21,6 +21,9 @@ $(document).ready(function() {
   $("#save-data").click( function() {
     writeAssocData();
   });
+  $("#download-csv").click( function() {
+    downloadCSV( assocData_obj );
+  });
 });
 
 const tableHeight = 500;
@@ -85,9 +88,9 @@ function setupCourseTable( data_obj, tableName ) {
   }
 
   var columns = [
-    {title: "ID", field: headers[0], width:80, cellClick: onSelectClick},
-    { title:"Name", field:headers[1], cellClick: onSelectClick },
-    { formatter: addButtonCustomFormatter, width:60, align:"center", cellClick: onAddClick }
+    { title: "ID", field: headers[0], width: 60, cellClick: onSelectClick, headerFilter: true },
+    { title:"Name", field: headers[1], cellClick: onSelectClick, headerFilter: true },
+    { formatter: addButtonCustomFormatter, width: 40, align:"center", cellClick: onAddClick }
     ]
 
   var table = new Tabulator("#"+tableName, {
@@ -127,8 +130,8 @@ function setupCertTable( data_obj, tableName ) {
   }
 
   var columns = [
-    { title:"Name", field:headers[1], cellClick: onSelectClick },
-    { formatter: addButtonCustomFormatter, width:60, align:"center", cellClick: onAddClick }
+    { title:"Name", field:headers[1], cellClick: onSelectClick, headerFilter: true },
+    { formatter: addButtonCustomFormatter, width: 40, align:"center", cellClick: onAddClick }
     ]
 
   var table = new Tabulator("#"+tableName, {
@@ -239,7 +242,6 @@ function writeAssocData() {
     // then add new
     assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );   
   }
-  downloadJSON( assocData_obj.arr );
 }
 
 function resetAssocTable( selected, data_obj, ID ) {
@@ -253,6 +255,14 @@ function resetAssocTable( selected, data_obj, ID ) {
     value: "0"
     }]]; // starter filter object should give no results
   
+  function deleteButtonCustomFormatter( cell, formatterParams ){
+    return "<button class='btn btn-sm btn-danger course-add-button font-weight-bold' >&times;</button>";
+  };
+  
+  function onDeleteClick( e, cell ){
+    cell.getRow().delete();
+  }
+  
   // set up root obj
   assocRoot_obj.type = selected;
   assocRoot_obj.ID = ID;
@@ -262,7 +272,7 @@ function resetAssocTable( selected, data_obj, ID ) {
     assocRoot_obj.name = certData_obj.headers[1];
     columns = [
       { title: "Name", field: assocRoot_obj.name },
-      { formatter:"buttonCross", width:40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
+      { formatter:"buttonCross", width: 40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
@@ -281,9 +291,9 @@ function resetAssocTable( selected, data_obj, ID ) {
   else {
     assocRoot_obj.name = courseData_obj.headers[1];
     columns = [
-      { title: "ID", field: courseData_obj.headers[0], width:80 },
+      { title: "ID", field: courseData_obj.headers[0], width: 60 },
       { title: "Name", field: assocRoot_obj.name },
-      { formatter:"buttonCross", width:40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
+      { formatter: deleteButtonCustomFormatter, width: 40, align:"center", cellClick: onDeleteClick }
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
@@ -302,8 +312,6 @@ function resetAssocTable( selected, data_obj, ID ) {
   // show filtered version of table
   assocTable = new Tabulator("#"+assocTableName, {
     layout:"fitColumns",
-    pagination:"local",
-    paginationSize: 10,
     data: data_obj.arr,
     //movableRows: true,
     initialFilter: filter,
@@ -319,4 +327,33 @@ function downloadJSON( content_arr ) {
   tempDownloadElement.href = URL.createObjectURL(file_blob);
   tempDownloadElement.download = "assoc_data.json";
   tempDownloadElement.click();
+}
+
+function downloadCSV( assocData_obj) {
+  var headers = assocData_obj.headers;
+  var data_arr = assocData_obj.arr;
+  
+  var csv_str = headers[0]+","+headers[1]+"\n";
+  
+  var file_blob;
+  var tempDownloadElement = document.createElement("a");
+  
+  function buildCsvRow( a, b ){
+    return a +","+ b +"\n";
+  }
+  
+  // first add headers
+  csv_str = buildCsvRow( headers[0], headers[1] )
+
+  // then all the data
+  $.each( data_arr, function( i, obj ){
+    var row = buildCsvRow( obj[headers[0]], obj[headers[1]] );
+    csv_str += row;
+  });
+
+  file_blob = new Blob( [csv_str], {type: "text/plain"});
+  
+  tempDownloadElement.href = URL.createObjectURL(file_blob);
+  tempDownloadElement.download = "association_data.csv";
+  tempDownloadElement.click(); // IE: "Access is denied"; see: https://connect.microsoft.com/IE/feedback/details/797361/ie-10-treats-blob-url-as-cross-origin-and-denies-access
 }
