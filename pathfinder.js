@@ -18,9 +18,7 @@ $(document).ready(function() {
   $("#download-json").click( function() {
     downloadJSON( assocData_obj.arr );
   });
-  $("#save-data").click( function() {
-    writeAssocData();
-  });
+
   $("#download-csv").click( function() {
     downloadCSV( assocData_obj );
   });
@@ -60,10 +58,13 @@ function processData( data ) {
   return { "arr": data_arr, "headers": headers };
 }
 
+/***********************
+    COURSE TABLE
+************************/
 function setupCourseTable( data_obj, tableName ) {
 
-  var headers = data_obj.headers;
-  var data_arr = data_obj.arr;
+  var courses_headers = data_obj.headers;
+  var courses_arr = data_obj.arr;
   
   function addButtonCustomFormatter( cell, formatterParams ){
     return "<button class='btn btn-sm btn-success course-add-button font-weight-bold' >&plus;</button>";
@@ -71,7 +72,30 @@ function setupCourseTable( data_obj, tableName ) {
   
   function onAddClick( e, cell ){
     var row = cell.getRow();
-    assocTable.addRow(row.getData());
+    var data = row.getData();
+    var assoc_arr  = assocData_obj.arr;
+    var certID = assocRoot_obj.ID;
+    
+    assocTable.addRow( data )
+      .then( function( row ) {
+        // look for existing
+        var found = false;
+
+        $.grep( assoc_arr, function( element, j ) {
+          if (element["CERT_ID"] === certID && element["COURSE_ID"] === data["COURSE_ID"] ) {
+            found = true;
+          return true;
+        }
+        return false;
+        });
+
+        if( !found ){ 
+          assocData_obj.arr.push( {"CERT_ID": certID, "COURSE_ID": data["COURSE_ID"]} );
+        }
+      })
+      .catch(function(error){
+        alert("Unable to add! Not sure why though...")
+      });
   }
 
   function onSelectClick( e, cell ){
@@ -88,13 +112,13 @@ function setupCourseTable( data_obj, tableName ) {
   }
 
   var columns = [
-    { title: "ID", field: headers[0], width: 60, cellClick: onSelectClick, headerFilter: true },
-    { title:"Name", field: headers[1], cellClick: onSelectClick, headerFilter: true },
+    { title: "ID", field: courses_headers[0], width: 60, cellClick: onSelectClick, headerFilter: true },
+    { title:"Name", field: courses_headers[1], cellClick: onSelectClick, headerFilter: true },
     { formatter: addButtonCustomFormatter, width: 40, align:"center", cellClick: onAddClick }
     ]
 
   var table = new Tabulator("#"+tableName, {
-    data: data_arr,
+    data: courses_arr,
     layout: "fitColumns",
     pagination: "local",
     paginationSize: 10,
@@ -102,6 +126,9 @@ function setupCourseTable( data_obj, tableName ) {
   });
 }
 
+/***********************
+    CERTIFICATION TABLE
+************************/
 function setupCertTable( data_obj, tableName ) {
 
   var headers = data_obj.headers;
@@ -113,7 +140,30 @@ function setupCertTable( data_obj, tableName ) {
   
   function onAddClick( e, cell ){
     var row = cell.getRow();
-    assocTable.addRow(row.getData());
+    var data = row.getData();
+    var assoc_arr  = assocData_obj.arr;
+    var courseID = assocRoot_obj.ID;
+    
+    assocTable.addRow( data )
+      .then( function( row ) {
+        // look for existing
+        var found = false;
+
+        $.grep( assoc_arr, function( element, j ) {
+          if (element["COURSE_ID"] === courseID && element["CERT_ID"] === data["CERT_ID"] ) {
+            found = true;
+          return true;
+        }
+        return false;
+        });
+
+        if( !found ){ 
+          assocData_obj.arr.push( { "CERT_ID": data["CERT_ID"], "COURSE_ID": courseID } );
+        }
+      })
+      .catch( function(error){
+        alert("Unable to add! Not sure why though...")
+      });
   }
 
   function onSelectClick( e, cell ){
@@ -171,79 +221,9 @@ function initAssocData( data, tableName ) {
   setupAssocTable( assocTableName );
 }
 
-function writeAssocData() {
-  var newAssoc_arr = [];
-  var filteredData_arr  = assocTable.getData(true); // true for filtered only
-  
-  function newAdditions( old_arr, new_arr ) {
-    var newElements_arr = [];
-    // find matches - if matched then we don't need to add it
-    // iterate through filtered assoc array
-    $.each( new_arr, function( i, obj ){
-      var found = false;
-      // find match in unfiltered assoc array (all existing associations)
-      $.grep( old_arr, function( element, j ) {
-        if (element["COURSE_ID"] === obj["COURSE_ID"] && element["CERT_ID"] === obj["CERT_ID"] ) {
-          found = true;
-          return true;
-        }
-        return false;
-      }); 
-      if( !found ){ newElements_arr.push(obj)}
-    });
-
-    return $.merge( old_arr, newElements_arr );
-  }
-  
-  function newDeletions( old_arr, new_arr, key, value ){
-    var updated_arr = Array.from(old_arr);
-    var key2 = (key === "COURSE_ID") ? "CERT_ID" : "COURSE_ID";
-
-    // iterate through original array
-    $.each( old_arr, function( i, obj ){
-      // only check the correct ID
-      if( obj[key] === value ){
-        var found = false;
-        // search in new filtered array (maybe deletions)
-        $.grep( new_arr, function( element, j ) {
-          if (element[key] === obj[key] && element[key2] === obj[key2] ) {
-            found = true;
-            return true;
-          }
-          return false;
-        });
-        // remove 
-        if( !found ){ 
-          updated_arr.splice( i, 1 )
-        }
-      }
-    });
-
-    return updated_arr;
-  }
-  
-  if( assocRoot_obj.type === "course" ){
-    // create new array of objects
-    $.each(filteredData_arr, function(i, obj){
-      newAssoc_arr.push({COURSE_ID: assocRoot_obj.ID, CERT_ID: obj.CERT_ID})
-    });
-    // first delete
-    assocData_obj.arr = newDeletions( assocData_obj.arr, newAssoc_arr, "COURSE_ID", assocRoot_obj.ID );
-    // then add new
-    assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );
-  }
-  else {
-    // create new array of objects
-    $.each(filteredData_arr, function(i, obj){
-      newAssoc_arr.push({CERT_ID: assocRoot_obj.ID, COURSE_ID: obj.COURSE_ID})
-    });
-    // first delete
-    assocData_obj.arr = newDeletions( assocData_obj.arr, newAssoc_arr, "CERT_ID", assocRoot_obj.ID );
-    // then add new
-    assocData_obj.arr = newAdditions( assocData_obj.arr, newAssoc_arr );   
-  }
-}
-
+/**************************
+    RESET ASSOCIATION TABLE
+***************************/
 function resetAssocTable( selected, data_obj, ID ) {
   
   var columns = [];
@@ -260,7 +240,36 @@ function resetAssocTable( selected, data_obj, ID ) {
   };
   
   function onDeleteClick( e, cell ){
-    cell.getRow().delete();
+    var row = cell.getRow();
+    var data = row.getData();
+    var assoc_arr  = assocData_obj.arr;
+    var certID, courseID;
+    
+    if (assocRoot_obj.type === "course") {
+      courseID = assocRoot_obj.ID;
+      certID = data["CERT_ID"];
+    }
+    else {
+      courseID = data["COURSE_ID"];
+      certID = assocRoot_obj.ID;
+    }
+    
+    cell.getRow().delete()
+      .then( function( row ) {
+        var indexOfMatch;
+        // iterate through association array to delete
+        $.each( assoc_arr, function( i, obj ){
+          // is this the one we want?
+          if( obj["COURSE_ID"] === courseID && obj["CERT_ID"] === certID ) {
+            indexOfMatch = i; // mark it for deletion
+          }
+        });
+        // delete the correct one
+        assoc_arr.splice( indexOfMatch, 1 );
+      })
+      .catch(function(error){
+        alert("Unable to delete! Hmmm...")
+      });
   }
   
   // set up root obj
@@ -272,7 +281,7 @@ function resetAssocTable( selected, data_obj, ID ) {
     assocRoot_obj.name = certData_obj.headers[1];
     columns = [
       { title: "Name", field: assocRoot_obj.name },
-      { formatter:"buttonCross", width: 40, align:"center", cellClick:function(e, cell) { cell.getRow().delete(); }}
+      { formatter:"buttonCross", width: 40, align:"center", cellClick: onDeleteClick }
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
