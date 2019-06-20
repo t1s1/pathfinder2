@@ -280,7 +280,7 @@ function resetAssocTable( selected, data_obj, ID ) {
   if (assocRoot_obj.type === "course") {
     assocRoot_obj.name = certData_obj.headers[1];
     columns = [
-      { title: "Name", field: assocRoot_obj.name },
+      { title: "Certification Name", field: assocRoot_obj.name },
       { formatter:"buttonCross", width: 40, align:"center", cellClick: onDeleteClick }
     ];
     // build correct filter
@@ -301,7 +301,7 @@ function resetAssocTable( selected, data_obj, ID ) {
     assocRoot_obj.name = courseData_obj.headers[1];
     columns = [
       { title: "ID", field: courseData_obj.headers[0], width: 60 },
-      { title: "Name", field: assocRoot_obj.name },
+      { title: "Course Name", field: assocRoot_obj.name },
       { formatter: deleteButtonCustomFormatter, width: 40, align:"center", cellClick: onDeleteClick }
     ];
     // build correct filter
