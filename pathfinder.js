@@ -333,8 +333,12 @@ function downloadJSON( content_arr ) {
   var tempDownloadElement = document.createElement("a");
   var file_blob = new Blob( [jsonData], {type: "json"});
   
+  var dateTime = new Date();
+  var stamp = dateTime.toLocaleString('en-US', { hour12: false }).replace(/[,:/ ]/g,'');
+  var filename = "assoc_data_"+stamp+".json";
+
   tempDownloadElement.href = URL.createObjectURL(file_blob);
-  tempDownloadElement.download = "assoc_data.json";
+  tempDownloadElement.download = filename;
   tempDownloadElement.click();
 }
 
@@ -343,6 +347,10 @@ function downloadCSV( assocData_obj) {
   var data_arr = assocData_obj.arr;
   
   var csv_str = headers[0]+","+headers[1]+"\n";
+  
+  var dateTime = new Date();
+  var stamp = dateTime.toLocaleString('en-US', { hour12: false }).replace(/[,:/ ]/g,'');
+  var filename = "assoc_data_"+stamp+".csv";
   
   var file_blob;
   var tempDownloadElement = document.createElement("a");
@@ -363,6 +371,6 @@ function downloadCSV( assocData_obj) {
   file_blob = new Blob( [csv_str], {type: "text/plain"});
   
   tempDownloadElement.href = URL.createObjectURL(file_blob);
-  tempDownloadElement.download = "association_data.csv";
+  tempDownloadElement.download = filename;
   tempDownloadElement.click(); // IE: "Access is denied"; see: https://connect.microsoft.com/IE/feedback/details/797361/ie-10-treats-blob-url-as-cross-origin-and-denies-access
 }
