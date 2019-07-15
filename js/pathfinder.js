@@ -1,39 +1,30 @@
-/*
-global $
-global Tabulator
-*/
-
-$(document).ready(function() {
-  $.get( "data/AA_courses.csv", function( data ) { initCourseData( data, "course-table" ) });
-  $.get( "data/AA_certs.csv", function( data ) { initCertData( data, "cert-table" ) });
-  $.get( "data/AA_assoc.csv", function( data ) { initAssocData( data, "assoc-table" ) });
-  /*
-  $.getJSON("http://34.229.45.11/json.php", function( json ) {
-      initAssocData( json,"assoc-table" );
-  });
-  
-  //assocTable.setData("http://34.229.45.11/json.php");
-  */
-  
-  $("#download-json").click( function() {
-    downloadJSON( assocData_obj.arr );
-  });
-
-  $("#download-csv").click( function() {
-    downloadCSV( assocData_obj );
-  });
-});
-
-const tableHeight = 500;
-
 // these need to persist and be accessible
+
 var courseData_obj = {};
+var courseTableConfig_obj = {};
+var courseTableName;
+
 var certData_obj = {};
+var certTableConfig_obj = {};
+var certTableName;
 
 var assocTable;
 var assocData_obj = {};
 var assocRoot_obj = { type:"", ID:"", name:"" };
 var assocTableName;
+
+var editMode = function () {
+  var isEditor;
+
+  return {
+    set: function( setIsEditor ) {
+      isEditor = setIsEditor;
+    },
+    get: function() {
+      return( isEditor );
+    },
+  }
+}();
 
 function processData( data ) {
   var dataRows = data.split(/\r\n|\n/);
@@ -65,6 +56,7 @@ function setupCourseTable( data_obj, tableName ) {
 
   var courses_headers = data_obj.headers;
   var courses_arr = data_obj.arr;
+  var columns;
   
   function addButtonCustomFormatter( cell, formatterParams ){
     return "<button class='btn btn-sm btn-success course-add-button font-weight-bold' >&plus;</button>";
@@ -111,19 +103,23 @@ function setupCourseTable( data_obj, tableName ) {
     $(".cert-add-button").prop('disabled', false);
   }
 
-  var columns = [
+  columns = editMode.get() ? [
     { title: "ID", field: courses_headers[0], width: 60, cellClick: onSelectClick, headerFilter: true },
     { title:"Name", field: courses_headers[1], cellClick: onSelectClick, headerFilter: true },
     { formatter: addButtonCustomFormatter, width: 40, align:"center", cellClick: onAddClick }
-    ]
+  ] : [
+    { title: "ID", field: courses_headers[0], width: 60, cellClick: onSelectClick, headerFilter: true },
+    { title:"Name", field: courses_headers[1], cellClick: onSelectClick, headerFilter: true }
+  ]
 
-  var table = new Tabulator("#"+tableName, {
+  return {
     data: courses_arr,
     layout: "fitColumns",
+    selectable: 1,
     pagination: "local",
-    paginationSize: 10,
+    paginationSize: 15,
     columns: columns
-  });
+  }
 }
 
 /***********************
@@ -133,6 +129,7 @@ function setupCertTable( data_obj, tableName ) {
 
   var headers = data_obj.headers;
   var data_arr = data_obj.arr;
+  var columns;
   
   function addButtonCustomFormatter( cell, formatterParams ){
     return "<button class='btn btn-sm btn-success cert-add-button font-weight-bold' >&plus;</button>";
@@ -143,7 +140,7 @@ function setupCertTable( data_obj, tableName ) {
     var data = row.getData();
     var assoc_arr  = assocData_obj.arr;
     var courseID = assocRoot_obj.ID;
-    
+
     assocTable.addRow( data )
       .then( function( row ) {
         // look for existing
@@ -152,9 +149,9 @@ function setupCertTable( data_obj, tableName ) {
         $.grep( assoc_arr, function( element, j ) {
           if (element["COURSE_ID"] === courseID && element["CERT_ID"] === data["CERT_ID"] ) {
             found = true;
-          return true;
-        }
-        return false;
+            return true;
+          }
+          return false;
         });
 
         if( !found ){ 
@@ -179,18 +176,21 @@ function setupCertTable( data_obj, tableName ) {
     $(".course-add-button").prop('disabled', false);
   }
 
-  var columns = [
+  columns = editMode.get() ? [
     { title:"Name", field:headers[1], cellClick: onSelectClick, headerFilter: true },
     { formatter: addButtonCustomFormatter, width: 40, align:"center", cellClick: onAddClick }
-    ]
+  ] : [
+    { title:"Name", field:headers[1], cellClick: onSelectClick, headerFilter: true }
+  ];
 
-  var table = new Tabulator("#"+tableName, {
+  return {
     data: data_arr,
     layout: "fitColumns",
-    pagination:"local",
-    paginationSize: 10,
+    selectable: 1,
+    pagination: "local",
+    paginationSize: 15,
     columns: columns
-  });
+  }
 }
 
 function setupAssocTable( tableName ){
@@ -205,15 +205,22 @@ function setupAssocTable( tableName ){
 
 function initCourseData( data, tableName ) {
   courseData_obj = processData( data );
-  setupCourseTable( courseData_obj, tableName );
+  courseTableName = tableName;
+  courseTableConfig_obj = setupCourseTable( courseData_obj, courseTableName );
+  new Tabulator("#"+courseTableName, courseTableConfig_obj);
 }
-
 
 function initCertData( data, tableName ) {
   certData_obj = processData( data );
-  setupCertTable( certData_obj, tableName );
+  certTableName = tableName;
+  certTableConfig_obj = setupCertTable( certData_obj, certTableName );
+  new Tabulator("#"+certTableName, certTableConfig_obj);
 }
 
+function refreshTables() {
+  new Tabulator("#"+certTableName, certTableConfig_obj);
+  new Tabulator("#"+courseTableName, courseTableConfig_obj);
+}
 
 function initAssocData( data, tableName ) {
   assocData_obj = processData( data );
@@ -234,6 +241,36 @@ function resetAssocTable( selected, data_obj, ID ) {
     type:"=", 
     value: "0"
     }]]; // starter filter object should give no results
+
+
+  function onCourseSelectClick( e, cell ){
+    var row = cell.getRow();
+    // set header of association table
+    $("#root-choice").val(row.getData()["NAME"]);
+    // set type
+    $("#root-type").text("COURSE");
+    // note that we send the *cert* data obj - we filter by course
+    resetAssocTable("course", certData_obj, row.getData()["COURSE_ID"]);
+    // disable the course ADD buttons and enable cert ADD buttons
+    $(".course-add-button").prop('disabled', true);
+    $(".cert-add-button").prop('disabled', false);
+    $("#nav-courses-tab").tab('show');
+  }
+
+  function onCertSelectClick( e, cell ){
+    var row = cell.getRow();
+    // set header of association table
+    $("#root-choice").val(row.getData()["NAME"]);
+    // set type
+    $("#root-type").text("CERTIFICATION");
+    // note that we send the *course* data obj - we filter by cert
+    resetAssocTable("cert", courseData_obj, row.getData()["CERT_ID"]);
+    // disable the cert ADD buttons and enable course ADD buttons
+    $(".cert-add-button").prop('disabled', true);
+    $(".course-add-button").prop('disabled', false);
+    $("#nav-certs-tab").tab('show');
+
+  }
   
   function deleteButtonCustomFormatter( cell, formatterParams ){
     return "<button class='btn btn-sm btn-danger course-add-button font-weight-bold' >&times;</button>";
@@ -279,9 +316,12 @@ function resetAssocTable( selected, data_obj, ID ) {
   // set up table to show certifications for COURSE
   if (assocRoot_obj.type === "course") {
     assocRoot_obj.name = certData_obj.headers[1];
-    columns = [
-      { title: "Certification Name", field: assocRoot_obj.name },
-      { formatter:"buttonCross", width: 40, align:"center", cellClick: onDeleteClick }
+
+    columns = editMode.get() ? [
+      { title: "Certification Name", field: assocRoot_obj.name, cellClick: onCertSelectClick },
+      { formatter: deleteButtonCustomFormatter, width: 40, align:"center", cellClick: onDeleteClick }
+    ] : [
+      { title: "Certification Name", field: assocRoot_obj.name, cellClick: onCertSelectClick }
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
@@ -299,10 +339,13 @@ function resetAssocTable( selected, data_obj, ID ) {
   // set up table to show courses for CERTIFICATION
   else {
     assocRoot_obj.name = courseData_obj.headers[1];
-    columns = [
+    columns = editMode.get() ? [
       { title: "ID", field: courseData_obj.headers[0], width: 60 },
-      { title: "Course Name", field: assocRoot_obj.name },
+      { title: "Course Name", field: assocRoot_obj.name, cellClick: onCourseSelectClick },
       { formatter: deleteButtonCustomFormatter, width: 40, align:"center", cellClick: onDeleteClick }
+    ] : [
+      { title: "ID", field: courseData_obj.headers[0], width: 60 },
+      { title: "Course Name", field: assocRoot_obj.name, cellClick: onCourseSelectClick }
     ];
     // build correct filter
     $.grep(assocData_obj.arr, function( element, i ) {
@@ -322,7 +365,6 @@ function resetAssocTable( selected, data_obj, ID ) {
   assocTable = new Tabulator("#"+assocTableName, {
     layout:"fitColumns",
     data: data_obj.arr,
-    //movableRows: true,
     initialFilter: filter,
     columns: columns
   });
@@ -353,6 +395,7 @@ function downloadCSV( assocData_obj) {
   var filename = "assoc_data_"+stamp+".csv";
   
   var file_blob;
+
   var tempDownloadElement = document.createElement("a");
   
   function buildCsvRow( a, b ){
@@ -369,8 +412,9 @@ function downloadCSV( assocData_obj) {
   });
 
   file_blob = new Blob( [csv_str], {type: "text/plain"});
-  
+
   tempDownloadElement.href = URL.createObjectURL(file_blob);
   tempDownloadElement.download = filename;
   tempDownloadElement.click(); // IE: "Access is denied"; see: https://connect.microsoft.com/IE/feedback/details/797361/ie-10-treats-blob-url-as-cross-origin-and-denies-access
+
 }

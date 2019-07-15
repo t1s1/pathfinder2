@@ -30,14 +30,11 @@
 
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js"></script>
-  <!-- For PDF download -->
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.5/jspdf.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.0.5/jspdf.plugin.autotable.js"></script>
 
   <script type="text/javascript" src="{{url_for('static', filename='tabulator/js/tabulator.min.js')}}"></script>
-  <script type="text/javascript" src="{{url_for('static', filename='pathfinder.js')}}"></script>
-  <script type="text/javascript" src="{{url_for('static', filename='showAssoc.js')}}"></script>
 
+  <script type="text/javascript" src="{{url_for('static', filename='pathfinder.js')}}"></script>
+  <script type="text/javascript" src="{{url_for('static', filename='editAssoc.js')}}"></script>
 </head>
 
 <body>
@@ -47,7 +44,7 @@
       <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
           <a class="nav-item nav-link show active h3 text-primary" id="nav-certs-tab" data-toggle="tab" href="#certs" role="tab" aria-controls="certs" aria-selected="true">Certifications</a>
-          <a class="text-muted nav-item nav-link h3" id="nav-courses-tab" data-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="false">Courses</a>
+          <a class="nav-item nav-link h3 text-muted" id="nav-courses-tab" data-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="false">Courses</a>
         </div>
       </nav>
       <div class="tab-content" id="nav-tabContent">
@@ -66,15 +63,18 @@
           <div class="col-10">
             <textarea id="root-choice" type="text" class="h4 text-primary w-100" placeholder="Select"></textarea>
           </div>
-          <div class="col-2">
+          <div class="col2">
             <button id="view" class="btn btn-sm bg-primary text-white">VIEW</button>
           </div>
         </div>
       </div>
       <div id="assoc-table"></div>
-      <div class="table-controls mt-5">
-        <button id="download-pdf" class="btn btn-sm bg-secondary text-white">Download PDF to share</button>
-      </div>
+    </div>
+  </div>
+  <div class="row m-3 border border-danger">
+    <div class="col-12 p-2">
+      <button id="download-csv" class="btn btn-sm bg-danger text-white">Download CSV</button>
+      <span class="h5 ml-5">Please save CSV when finished editing and before closing window, or changes will be lost!</span>
     </div>
   </div>
 </div>
