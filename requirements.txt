@@ -34,7 +34,7 @@ pygobject==3.20.0
 PyJWT==1.7.1
 python-apt==1.1.0b1+ubuntu0.16.4.4
 python-dateutil==2.8.0
-PyYAML==5.1.1
+PyYAML==5.4
 requests==2.22.0
 requests-oauthlib==1.2.0
 sfctl==7.1.0
