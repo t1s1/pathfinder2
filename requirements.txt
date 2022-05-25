@@ -31,7 +31,7 @@ pycparser==2.19
 pycurl==7.43.0
 Pygments==2.4.2
 pygobject==3.20.0
-PyJWT==1.7.1
+PyJWT==2.4.0
 python-apt==1.1.0b1+ubuntu0.16.4.4
 python-dateutil==2.8.0
 PyYAML==5.1.1
